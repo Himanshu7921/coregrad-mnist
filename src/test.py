@@ -15,7 +15,6 @@ def test_model(x_test, y_test):
     )
     # load trained weights
     model = load_model(
-        model=model,
         load_path=os.path.join(
             config["save_path"],
             "model.pkl"
