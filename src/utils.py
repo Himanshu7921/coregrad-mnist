@@ -49,6 +49,17 @@ def pre_processing(x: np.ndarray):
     x = x.reshape(B, -1)
     return x
 
+def predict(x, model):
+    logits = model(x)
+    # softmax over single sample logits
+    y_probs = softmax(logits)
+    # argmax prediction
+    pred_class = max(
+        range(len(y_probs)),
+        key=lambda i: y_probs[i].data
+        )
+    return pred_class
+
 
 def cross_entropy_with_logits_loss(logits: List[Scalar], y_true: List[Scalar]):
     # NOTE: y_true must be a one hot encoded vector
