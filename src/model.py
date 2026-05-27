@@ -28,15 +28,19 @@ class NeuralNetwork:
         self.n_layers = n_layers
         self.layers = []
 
-        # Adding 1st layer
-        self.layers.append(LinearLayer(in_features, hidden_dim))
+        if self.n_layers == 1:
+            self.layers.append(LinearLayer(in_features = self.in_features, out_features=self.out_features))
 
-        # Adding hidden dims
-        for _ in range(n_layers - 2):
-            self.layers.append(LinearLayer(hidden_dim, hidden_dim))
-        
-        # Adding Final Layer
-        self.layers.append(LinearLayer(hidden_dim, out_features))
+        else:
+            # Adding 1st layer
+            self.layers.append(LinearLayer(in_features, hidden_dim))
+
+            # Adding hidden dims
+            for _ in range(n_layers - 2):
+                self.layers.append(LinearLayer(hidden_dim, hidden_dim))
+            
+            # Adding Final Layer
+            self.layers.append(LinearLayer(hidden_dim, out_features))
     
     def forward(self, x: Scalar):
         for layer in self.layers:
