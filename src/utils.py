@@ -4,6 +4,7 @@ from coregrad import Scalar
 from model import NeuralNetwork
 
 import os
+import random
 import pickle
 import struct
 import numpy as np
@@ -108,29 +109,78 @@ def load_data(dataset_path: str):
     return train_images, train_labels, test_images, test_labels
 
 
-def save_model(model: NeuralNetwork, save_path: str):
-    """
-    Script for saving the model
-    """
 
-    with open(save_path, "wb") as f:
-        pickle.dump(model, f)
-    print(f"Model saved at path [{save_path}]")
+def save_model(model, save_path):
+    os.makedirs(save_path, exist_ok=True)
+    checkpoint = {
+        "parameters": [
+            p.data for p in model.parameters()
+        ]
+    }
+    with open(
+        os.path.join(save_path, "model.pkl"),
+        "wb"
+    ) as f:
+        pickle.dump(checkpoint, f)
+    print("[INFO] Model saved successfully.")
 
-def test_accuracy(model: NeuralNetwork, x: List[Scalar], y: List[Scalar]):
-    """
-    Tests the accuracy of the given model on the provided dataset
-    """
-    x_test = [Scalar(x) for x in x]
-    y_test = [Scalar(y) for y in y]
+def load_model(load_path):
+    model = NeuralNetwork(
+        in_features=config["H"] * config["W"],
+        hidden_dim=config["hidden_dim"],
+        out_features=config["out_features"],
+        n_layers=config["n_layers"]
+    )
+    
+    with open(load_path, "rb") as f:
+        checkpoint = pickle.load(f)
+    for p, saved_p in zip(
+        model.parameters(),
+        checkpoint["parameters"]
+    ):
+        p.data = saved_p
+    return model
 
-    y_preds =  [model(x) for x in x_test]
+def test_accuracy(model, x, y):
+    correct = 0
+    for xi, yi in zip(x, y):
+        logits = model(xi)
+        probs = softmax(logits)
+        pred_class = max(
+            range(len(probs)),
+            key=lambda i: probs[i].data
+        )
+        if pred_class == yi:
+            correct += 1
+    return (correct / len(x)) * 100
 
-    y_preds_data = np.array([y.data for y in y_preds])
-    y_true_data = np.array([y.data for y in y_test])
+def get_batch(x_test, y_test, batch_size = config["evaluation_batch_size"]):
+        test_batch_indices = random.sample(
+                    range(len(x_test)),
+                    batch_size
+        )
 
-    acc = ((y_preds_data == y_true_data).sum() / len(y_true_data) ) * 100
-    return acc
+        x_test_batch = [
+                    x_test[i]
+                    for i in test_batch_indices
+                ]
+
+        y_test_batch = [
+                    y_test[i]
+                    for i in test_batch_indices
+                ]
+
+                # preprocess test batch
+        x_test_batch = pre_processing(
+                    np.array(x_test_batch)
+                )
+
+                # convert to Scalars
+        x_test_batch = [
+                    [Scalar(v) for v in sample]
+                    for sample in x_test_batch
+                ]
+        return x_test_batch, y_test_batch
 
 def plot_img(img, label):
     """
