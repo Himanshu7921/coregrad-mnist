@@ -6,6 +6,18 @@ The primary objective of this project is to empirically validate the computation
 
 ---
 
+## CoreGrad Dependency
+
+This repository is built entirely on top of the `coregrad` scalar-based automatic differentiation engine.
+
+CoreGrad implements a minimal reverse-mode automatic differentiation system with dynamic computational graph construction, scalar-level gradient propagation, and topologically ordered backpropagation.
+
+Repository: https://github.com/Himanshu7921/coregrad
+
+The primary purpose of this project is to empirically validate the correctness, numerical consistency, and optimization capability of the `coregrad` autodiff engine under real neural network training workloads involving high-dimensional non-linear classification tasks.
+
+All gradient propagation, parameter updates, computational graph traversal, and optimization dynamics in this repository are executed exclusively through `coregrad`.
+
 ## Repository Objective
 
 This implementation bypasses high-level tensor abstractions to study neural network optimization dynamics at the most granular level. The codebase is designed to evaluate:
