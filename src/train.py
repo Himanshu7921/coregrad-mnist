@@ -3,8 +3,9 @@ from typing import List
 from config import config
 from optimizer import Adam
 from coregrad import Scalar
+from test import test_model
 from model import NeuralNetwork
-from utils import one_hot_encode, load_data, save_model, test_accuracy, cross_entropy_with_logits_loss, pre_processing
+from utils import one_hot_encode, load_data, save_model, test_accuracy, cross_entropy_with_logits_loss, pre_processing, get_batch
 
 import random
 from tqdm import tqdm
@@ -12,7 +13,7 @@ import numpy as np
 import sys
 sys.setrecursionlimit(100000)
 
-def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwork, optimizer: Adam):
+def train_model(x_train: List[Scalar], y_train: List[Scalar], x_test: List[Scalar], y_test: List[Scalar], model: NeuralNetwork, optimizer: Adam):
 
     # wandb for experiment tracking
     wandb.init(
@@ -21,8 +22,6 @@ def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwo
     )
 
     nn = model
-
-    lr = config["lr"]
     EPOCHS = config["epochs"]
     batch_size = config["batch_size"]
     alpha = config["alpha"]
@@ -84,11 +83,31 @@ def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwo
         })
 
         if epoch % 2 == 0:
+            x_test_batch, y_test_batch = get_batch(x_test, y_test, batch_size = config["evaluation_batch_size"])
+
+            # test accuracy
+            acc = test_accuracy(
+                model=nn,
+                x=x_test_batch,
+                y=y_test_batch
+            )
+
+            # logging
             tqdm.write(
-            f"Epoch [{epoch + 1}/{EPOCHS}] | "
-            f"Loss: {loss.data:.6f} |"
-            f"lr [{lr}]"
-        )
+                f"Epoch [{epoch + 1}/{EPOCHS}] | "
+                f"Loss: {loss.data:.6f} | "
+                f"Acc: {acc:.2f}%"
+            )
+            
+        # Test the model after every 10 epochs
+        if epoch % 10 == 0 and epoch > 10:
+            test_model(x_test = x_test_batch, y_test = y_test_batch)
+
+            
+        # Adding interval checkpoint saving of the model
+        if epoch % config["save_interval"] == 0:
+            save_model(model = nn, save_path = config["save_path"])
+
     wandb.finish()
     return nn
 
@@ -107,19 +126,35 @@ def main():
     # Load x_test, y_test, x_train, y_train
     x_train, y_train, x_test, y_test = load_data(dataset_path = config["dataset_path"])
 
-    # Preprocess to match Scalar Datastructure
-    y_train = one_hot_encode([Scalar(x) for x in y_train])
-    y_test = one_hot_encode([Scalar(x) for x in y_test])
+    # keeping original labels
+    y_train_labels = y_train
+    y_test_labels = y_test
+
+    # one-hot encode for training
+    y_train = one_hot_encode([Scalar(y) for y in y_train])
+    y_test = one_hot_encode([Scalar(y) for y in y_test])
 
     # Feed training images and label into the model
-    nn = train_model(x_train = x_train, y_train = y_train, model = nn, optimizer = optimizer)
+    nn = train_model(x_train = x_train, y_train = y_train, x_test = x_test, y_test = y_test_labels, model = nn, optimizer = optimizer)
 
     # save the model
     save_model(model = nn, save_path = config["save_path"])
 
-    # test accuracy of the model
-    acc = test_accuracy(model = nn, x = x_test, y = y_test)
-    print(f"Accuracy of the model on test set is: {acc:.4f}%")
+    # random evaluation batch
+    x_test_batch, y_test_batch = get_batch(x_test, y_test, batch_size = 32)
+
+    # test accuracy
+    acc = test_accuracy(
+                    model=nn,
+                    x=x_test_batch,
+                    y=y_test_batch
+                )
+    
+    x_test_batch, y_test_batch = get_batch(x_test, y_test, batch_size = 32)
+
+    # Test the model: it internally loads the model for testing
+    test_model(x_test = x_test_batch, y_test = y_test_batch)
+    print(f"Accuracy of the Trained model on 32 random samples from test set is: {acc:.4f}%")
 
 if __name__ == "__main__":
     main()
