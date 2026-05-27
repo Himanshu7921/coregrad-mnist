@@ -16,7 +16,12 @@ class Neuron:
     """
     def __init__(self, in_features: int):
         self.in_features = in_features
-        self.weight = [Scalar(random.uniform(-1, 1)) for _ in range(in_features)]
+        limit = (1 / in_features) ** 0.5
+
+        self.weight = [ # Proper weight initialization
+            Scalar(random.uniform(-limit, limit))
+            for _ in range(in_features)
+        ]
         self.bias = Scalar(random.uniform(-1, 1))
     
     def __call__(self, x: Scalar):
