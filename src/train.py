@@ -1,6 +1,7 @@
 import wandb
 from typing import List
 from config import config
+from optimizer import Adam
 from coregrad import Scalar
 from model import NeuralNetwork
 from utils import one_hot_encode, load_data, save_model, test_accuracy, cross_entropy_with_logits_loss, pre_processing
@@ -11,7 +12,7 @@ import numpy as np
 import sys
 sys.setrecursionlimit(100000)
 
-def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwork):
+def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwork, optimizer: Adam):
 
     # wandb for experiment tracking
     wandb.init(
@@ -67,18 +68,14 @@ def train_model(x_train: List[Scalar], y_train: List[Scalar], model: NeuralNetwo
         reg_loss = reg_loss * alpha
         loss += reg_loss
 
-        lr = 1.0 - 0.4 * epoch/100
+        # lr = config["lr"] * (0.995 ** epoch) # exponential lr scheduler
 
-        # optimizer.zero_grad()
-        for p in nn.parameters():
-            p.grad = 0
+        optimizer.zero_grad()
 
         # backward pass
         loss.backward()
 
-        # optimizer.step()
-        for p in nn.parameters():
-            p.data -= p.grad * lr
+        optimizer.step()
 
         # wandb logging
         wandb.log({
@@ -104,6 +101,9 @@ def main():
         n_layers = config["n_layers"]
     )
 
+    # Define Optimizer
+    optimizer = Adam(parameters = nn.parameters(), lr = config["lr"])
+
     # Load x_test, y_test, x_train, y_train
     x_train, y_train, x_test, y_test = load_data(dataset_path = config["dataset_path"])
 
@@ -112,7 +112,7 @@ def main():
     y_test = one_hot_encode([Scalar(x) for x in y_test])
 
     # Feed training images and label into the model
-    nn = train_model(x_train = x_train, y_train = y_train, model = nn)
+    nn = train_model(x_train = x_train, y_train = y_train, model = nn, optimizer = optimizer)
 
     # save the model
     save_model(model = nn, save_path = config["save_path"])
