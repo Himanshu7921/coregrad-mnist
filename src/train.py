@@ -141,7 +141,7 @@ def main():
     save_model(model = nn, save_path = config["save_path"])
 
     # random evaluation batch
-    x_test_batch, y_test_batch = get_batch(x_test, y_test, batch_size = 32)
+    x_test_batch, y_test_batch = get_batch(x_test, y_test_labels, batch_size = config["evaluation_batch_size"])
 
     # test accuracy
     acc = test_accuracy(
@@ -149,9 +149,6 @@ def main():
                     x=x_test_batch,
                     y=y_test_batch
                 )
-    
-    x_test_batch, y_test_batch = get_batch(x_test, y_test, batch_size = 32)
-
     # Test the model: it internally loads the model for testing
     test_model(x_test = x_test_batch, y_test = y_test_batch)
     print(f"Accuracy of the Trained model on 32 random samples from test set is: {acc:.4f}%")
