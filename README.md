@@ -41,7 +41,7 @@ The repository includes:
 
 ## Dependencies
 
-* `coregrad==0.1.0`
+* `coregrad==0.0.3`
 * `numpy` *(For vectorized data loading and matrix-to-scalar parsing utilities)*
 
 ---
