@@ -1,0 +1,3 @@
+coregrad == 0.0.3 # my own autograd engine: Available here: https://github.com/Himanshu7921/coregrad
+matplotlib
+numpy
