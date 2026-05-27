@@ -36,6 +36,6 @@ def test_model(x_test, y_test):
         if pred_class == y:
             correct += 1
     acc = (correct / len(y_test)) * 100
-    print(f"Predictions: {predictions[:10]}")
-    print(f"Actual Labels: {y_test[:10]}")
+    print(f"Predictions: {predictions[:25]}")
+    print(f"Actual Labels: {[int(y) for y in y_test[:25]]}")
     print(f"Test Accuracy: {acc:.2f}%")
